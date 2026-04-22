@@ -14,8 +14,10 @@ export function useAppointments() {
       .select('*')
       .order('creado_en', { ascending: false })
 
-    if (error) setError('No se pudieron cargar las citas.')
-    else setCitas(data)
+    if (error) {
+      console.error('Supabase error:', error)
+      setError(`Error: ${error.message} (código: ${error.code})`)
+    } else setCitas(data)
     setLoading(false)
   }, [])
 
