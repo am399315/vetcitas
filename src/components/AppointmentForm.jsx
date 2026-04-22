@@ -27,7 +27,7 @@ function Field({ id, label, error, children }) {
 export default function AppointmentForm({ onAdd }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
-  const [submitted, setSubmitted] = useState(false)
+  const [status, setStatus] = useState('idle') // idle | loading | success | error
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -35,27 +35,33 @@ export default function AppointmentForm({ onAdd }) {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const validationErrors = validateAppointment(form)
     if (Object.keys(validationErrors).length > 0) { setErrors(validationErrors); return }
 
-    onAdd({
-      paciente: sanitizeText(form.paciente),
-      propietario: sanitizeText(form.propietario),
-      email: sanitizeText(form.email),
-      fecha: form.fecha,
-      hora: form.hora,
-      sintomas: sanitizeText(form.sintomas),
-    })
-
-    setForm(EMPTY_FORM)
-    setErrors({})
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 3500)
+    setStatus('loading')
+    try {
+      await onAdd({
+        paciente: sanitizeText(form.paciente),
+        propietario: sanitizeText(form.propietario),
+        email: sanitizeText(form.email),
+        fecha: form.fecha,
+        hora: form.hora,
+        sintomas: sanitizeText(form.sintomas),
+      })
+      setForm(EMPTY_FORM)
+      setErrors({})
+      setStatus('success')
+      setTimeout(() => setStatus('idle'), 3500)
+    } catch {
+      setStatus('error')
+      setTimeout(() => setStatus('idle'), 4000)
+    }
   }
 
   const today = new Date().toISOString().split('T')[0]
+  const isSaving = status === 'loading'
 
   return (
     <section className="form-card glass-card">
@@ -71,10 +77,17 @@ export default function AppointmentForm({ onAdd }) {
         </div>
       </div>
 
-      {submitted && (
+      {status === 'success' && (
         <div className="toast-success" role="alert">
           <span className="toast-icon">✓</span>
-          <span>¡Cita registrada exitosamente!</span>
+          <span>¡Cita guardada en la base de datos!</span>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="toast-error" role="alert">
+          <span className="toast-icon toast-icon--error">✕</span>
+          <span>Error al guardar. Revisa tu conexión.</span>
         </div>
       )}
 
@@ -84,8 +97,7 @@ export default function AppointmentForm({ onAdd }) {
             <input
               id="paciente" name="paciente" type="text"
               value={form.paciente} onChange={handleChange}
-              placeholder="Ej: Max" maxLength={60}
-              aria-describedby={errors.paciente ? 'paciente-error' : undefined}
+              placeholder="Ej: Max" maxLength={60} disabled={isSaving}
               className={errors.paciente ? 'input-error' : ''}
             />
           </Field>
@@ -94,8 +106,7 @@ export default function AppointmentForm({ onAdd }) {
             <input
               id="propietario" name="propietario" type="text"
               value={form.propietario} onChange={handleChange}
-              placeholder="Ej: Carlos García" maxLength={60}
-              aria-describedby={errors.propietario ? 'propietario-error' : undefined}
+              placeholder="Ej: Carlos García" maxLength={60} disabled={isSaving}
               className={errors.propietario ? 'input-error' : ''}
             />
           </Field>
@@ -104,8 +115,7 @@ export default function AppointmentForm({ onAdd }) {
             <input
               id="email" name="email" type="email"
               value={form.email} onChange={handleChange}
-              placeholder="correo@ejemplo.com" maxLength={100}
-              aria-describedby={errors.email ? 'email-error' : undefined}
+              placeholder="correo@ejemplo.com" maxLength={100} disabled={isSaving}
               className={errors.email ? 'input-error' : ''}
             />
           </Field>
@@ -113,8 +123,8 @@ export default function AppointmentForm({ onAdd }) {
           <Field id="fecha" label="📅 Fecha" error={errors.fecha}>
             <input
               id="fecha" name="fecha" type="date"
-              value={form.fecha} onChange={handleChange} min={today}
-              aria-describedby={errors.fecha ? 'fecha-error' : undefined}
+              value={form.fecha} onChange={handleChange}
+              min={today} disabled={isSaving}
               className={errors.fecha ? 'input-error' : ''}
             />
           </Field>
@@ -122,8 +132,7 @@ export default function AppointmentForm({ onAdd }) {
           <Field id="hora" label="🕐 Hora" error={errors.hora}>
             <input
               id="hora" name="hora" type="time"
-              value={form.hora} onChange={handleChange}
-              aria-describedby={errors.hora ? 'hora-error' : undefined}
+              value={form.hora} onChange={handleChange} disabled={isSaving}
               className={errors.hora ? 'input-error' : ''}
             />
           </Field>
@@ -134,18 +143,26 @@ export default function AppointmentForm({ onAdd }) {
             id="sintomas" name="sintomas"
             value={form.sintomas} onChange={handleChange}
             placeholder="Describe los síntomas o motivo de la consulta..."
-            maxLength={300} rows={4}
-            aria-describedby={errors.sintomas ? 'sintomas-error' : undefined}
+            maxLength={300} rows={4} disabled={isSaving}
             className={errors.sintomas ? 'input-error' : ''}
           />
           <span className="char-count">{form.sintomas.length}/300</span>
         </Field>
 
-        <button type="submit" className="btn-submit">
-          Agregar Cita
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+        <button type="submit" className="btn-submit" disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <span className="spinner" aria-hidden="true" />
+              Guardando...
+            </>
+          ) : (
+            <>
+              Agregar Cita
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </>
+          )}
         </button>
       </form>
     </section>

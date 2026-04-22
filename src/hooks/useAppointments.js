@@ -1,46 +1,43 @@
-import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'citas_v1'
-
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function saveToStorage(citas) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(citas))
-  } catch {
-    // LocalStorage lleno o bloqueado — silencioso en producción
-  }
-}
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 
 export function useAppointments() {
-  const [citas, setCitas] = useState(loadFromStorage)
+  const [citas, setCitas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  useEffect(() => {
-    saveToStorage(citas)
-  }, [citas])
+  const fetchCitas = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    const { data, error } = await supabase
+      .from('citas')
+      .select('*')
+      .order('creado_en', { ascending: false })
 
-  function addCita(cita) {
-    const nueva = { ...cita, id: crypto.randomUUID(), creadoEn: new Date().toISOString() }
-    setCitas(prev => [nueva, ...prev])
-    return nueva.id
+    if (error) setError('No se pudieron cargar las citas.')
+    else setCitas(data)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchCitas() }, [fetchCitas])
+
+  async function addCita(cita) {
+    const { data, error } = await supabase
+      .from('citas')
+      .insert([{ ...cita, creado_en: new Date().toISOString() }])
+      .select()
+      .single()
+
+    if (error) throw new Error('No se pudo guardar la cita.')
+    setCitas(prev => [data, ...prev])
+    return data.id
   }
 
-  function deleteCita(id) {
+  async function deleteCita(id) {
+    const { error } = await supabase.from('citas').delete().eq('id', id)
+    if (error) throw new Error('No se pudo eliminar la cita.')
     setCitas(prev => prev.filter(c => c.id !== id))
   }
 
-  function updateCita(id, updated) {
-    setCitas(prev => prev.map(c => (c.id === id ? { ...c, ...updated } : c)))
-  }
-
-  return { citas, addCita, deleteCita, updateCita }
+  return { citas, loading, error, addCita, deleteCita, refetch: fetchCitas }
 }

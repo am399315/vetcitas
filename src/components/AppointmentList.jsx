@@ -1,7 +1,25 @@
 import { useState, useMemo } from 'react'
 import AppointmentCard from './AppointmentCard'
 
-export default function AppointmentList({ citas, onDelete }) {
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card" aria-hidden="true">
+      <div className="skeleton-row">
+        <div className="sk sk-avatar" />
+        <div className="sk-lines">
+          <div className="sk sk-title" />
+          <div className="sk sk-sub" />
+        </div>
+      </div>
+      <div className="sk sk-chip" />
+      <div className="sk sk-chip sk-chip-sm" />
+      <div className="sk sk-text" />
+      <div className="sk sk-text sk-text-sm" />
+    </div>
+  )
+}
+
+export default function AppointmentList({ citas, loading, onDelete }) {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('reciente')
 
@@ -15,7 +33,7 @@ export default function AppointmentList({ citas, onDelete }) {
       )
       .sort((a, b) => {
         if (sortBy === 'fecha') return a.fecha.localeCompare(b.fecha) || a.hora.localeCompare(b.hora)
-        return new Date(b.creadoEn) - new Date(a.creadoEn)
+        return new Date(b.creado_en) - new Date(a.creado_en)
       })
   }, [citas, search, sortBy])
 
@@ -24,7 +42,7 @@ export default function AppointmentList({ citas, onDelete }) {
       <div className="list-heading">
         <div className="list-title-row">
           <h2>Citas Registradas</h2>
-          <span className="count-badge">{citas.length}</span>
+          <span className="count-badge">{loading ? '…' : citas.length}</span>
         </div>
 
         <div className="list-controls">
@@ -40,6 +58,7 @@ export default function AppointmentList({ citas, onDelete }) {
               className="search-input"
               aria-label="Buscar citas"
               maxLength={60}
+              disabled={loading}
             />
           </div>
 
@@ -48,6 +67,7 @@ export default function AppointmentList({ citas, onDelete }) {
             onChange={e => setSortBy(e.target.value)}
             className="sort-select"
             aria-label="Ordenar citas"
+            disabled={loading}
           >
             <option value="reciente">Más reciente</option>
             <option value="fecha">Por fecha</option>
@@ -55,7 +75,11 @@ export default function AppointmentList({ citas, onDelete }) {
         </div>
       </div>
 
-      {citas.length === 0 ? (
+      {loading ? (
+        <div className="citas-grid">
+          {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
+        </div>
+      ) : citas.length === 0 ? (
         <div className="empty-state">
           <div className="empty-illustration" aria-hidden="true">🐾</div>
           <h3>Sin citas aún</h3>

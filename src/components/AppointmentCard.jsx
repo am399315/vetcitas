@@ -17,10 +17,7 @@ function getGradient(name) {
 function formatDate(dateStr) {
   const [y, m, d] = dateStr.split('-')
   return new Date(y, m - 1, d).toLocaleDateString('es-ES', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   })
 }
 
@@ -30,16 +27,26 @@ function isUpcoming(fecha) {
 
 export default function AppointmentCard({ cita, onDelete }) {
   const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [g1, g2] = getGradient(cita.paciente)
   const upcoming = isUpcoming(cita.fecha)
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!confirming) { setConfirming(true); return }
-    onDelete(cita.id)
+    setDeleting(true)
+    try {
+      await onDelete(cita.id)
+    } catch {
+      setDeleting(false)
+      setConfirming(false)
+    }
   }
 
   return (
-    <article className="cita-card" aria-label={`Cita de ${cita.paciente}`}>
+    <article
+      className={`cita-card ${deleting ? 'cita-card--removing' : ''}`}
+      aria-label={`Cita de ${cita.paciente}`}
+    >
       <div className="cita-card-glow" style={{ background: `radial-gradient(circle at 0% 0%, ${g1}22, transparent 70%)` }} aria-hidden="true" />
 
       <div className="cita-top">
@@ -61,11 +68,12 @@ export default function AppointmentCard({ cita, onDelete }) {
           </span>
           <button
             onClick={handleDelete}
+            disabled={deleting}
             className={`btn-delete ${confirming ? 'btn-delete-confirm' : ''}`}
             aria-label={confirming ? 'Confirmar eliminación' : `Eliminar cita de ${cita.paciente}`}
-            onBlur={() => setConfirming(false)}
+            onBlur={() => !deleting && setConfirming(false)}
           >
-            {confirming ? '¿Seguro?' : '✕'}
+            {deleting ? <span className="spinner spinner-sm" aria-hidden="true" /> : confirming ? '¿Seguro?' : '✕'}
           </button>
         </div>
       </div>

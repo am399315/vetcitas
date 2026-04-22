@@ -385,6 +385,13 @@ textarea {
 
 .btn-submit:active { transform: translateY(0); filter: brightness(.95); }
 
+.btn-submit:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
 /* ============================================================
    TOAST SUCCESS
    ============================================================ */
@@ -419,6 +426,122 @@ textarea {
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(-10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast-error {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .75rem 1rem;
+  background: rgba(248,113,113,.1);
+  border: 1px solid rgba(248,113,113,.3);
+  border-radius: 10px;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--danger);
+  margin-bottom: 1.25rem;
+  animation: fadeSlideIn .3s ease;
+}
+
+.toast-icon--error {
+  background: var(--danger);
+  color: white;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner-sm {
+  width: 12px; height: 12px;
+  border-width: 1.5px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Global error banner */
+.global-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .75rem 1.25rem;
+  background: rgba(248,113,113,.1);
+  border: 1px solid rgba(248,113,113,.25);
+  border-radius: 12px;
+  color: var(--danger);
+  font-size: .875rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.retry-btn {
+  background: rgba(248,113,113,.2);
+  border: 1px solid rgba(248,113,113,.4);
+  color: var(--danger);
+  border-radius: 8px;
+  padding: .35rem .9rem;
+  font-size: .8rem;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+
+.retry-btn:hover { background: rgba(248,113,113,.3); }
+
+/* Card removing animation */
+.cita-card--removing {
+  opacity: .4;
+  transform: scale(.97);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+/* Skeleton loader */
+.skeleton-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--r);
+  padding: 1.2rem;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+
+.sk-lines { flex: 1; display: flex; flex-direction: column; gap: .5rem; justify-content: center; }
+
+.sk {
+  background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.05) 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.5s infinite;
+}
+
+.sk-avatar { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; }
+.sk-title  { height: 14px; width: 70%; }
+.sk-sub    { height: 11px; width: 50%; }
+.sk-chip   { height: 26px; width: 55%; border-radius: 8px; margin-bottom: .5rem; }
+.sk-chip-sm { width: 35%; }
+.sk-text   { height: 11px; width: 100%; margin-bottom: .4rem; }
+.sk-text-sm { width: 75%; margin-bottom: 0; }
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
 }
 
 /* ============================================================
